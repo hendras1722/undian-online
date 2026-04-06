@@ -7,6 +7,7 @@ import {
   useQueryClient,
   UseMutationResult,
   UseQueryResult,
+  QueryClient,
 } from '@tanstack/react-query'
 import React from 'react'
 import { toast } from 'sonner'
@@ -21,7 +22,7 @@ type ApiOptions<TResponse, TBody = unknown> = {
   enabled?: boolean
   autoRefetchOnWindowFocus?: boolean
   staleTime?: number
-  onSuccess?: (data: TResponse) => void
+  onSuccess?: (data: {data: TResponse, queryClient: QueryClient}) => void
   onError?: (error: Error) => void
   NotifySuccess?: boolean
   NotifyError?: boolean
@@ -77,7 +78,7 @@ export function useApi<TResponse, TBody = unknown>(
           duration: 3000,
           richColors: true,
         })
-      options.onSuccess?.(data)
+      options.onSuccess?.({ data, queryClient})
     },
     onError: (error) => {
       console.error('❌ error:', error)
@@ -109,7 +110,7 @@ export function useApi<TResponse, TBody = unknown>(
       }
     },
     onSuccess: (data) => {
-      options.onSuccess?.(data)
+      options.onSuccess?.({ data, queryClient })
       queryClient.invalidateQueries({ queryKey: key })
     },
     onError: (error: Error) => {

@@ -8,9 +8,10 @@ import Elfida from '@/assets/img/Elfida.png'
 import Royal from '@/assets/img/Royal.png'
 import MuliaPark from '@/assets/img/MuliaPark.png'
 import ArrayMap from '../atoms/ArrayMap'
+import { Each, useComputed } from 'use-react-utilities'
 
 export default function Project() {
-  const listProject = [
+  const listProject = useComputed(() => [
     {
       name: 'Perumahan Halal Elfida Mulia',
       image: HalalElfida,
@@ -41,7 +42,7 @@ export default function Project() {
       location: 'Jl. Mulia, Jl. KH. Harun Nafsi Samarinda, Kalimantan Timur',
       tipe: ['Kaving', 'Kavling Hook'],
     },
-  ]
+  ])
   return (
     <section
       id="project"
@@ -55,7 +56,7 @@ export default function Project() {
       </div>
       <div className="grid md:grid-cols-3 grid-cols-1 grid-rows-2 gap-4 mt-[40px]">
         <ArrayMap
-          of={listProject}
+          of={listProject.value}
           render={(item, index) => (
             <div
               key={index + 'listproject'}
@@ -87,7 +88,7 @@ export default function Project() {
               <div className="mt-5 flex flex-col">
                 <div className="text-muted-foreground text-sm">Tipe Unit</div>
                 <div className="mt-2 flex items-center gap-2 overflow-auto">
-                  <ArrayMap
+                  <Each
                     of={item.tipe}
                     render={(item, index) => (
                       <div
