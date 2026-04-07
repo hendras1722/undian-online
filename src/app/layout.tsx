@@ -11,8 +11,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Panglima Propertindo',
-  description: 'Panglima Propertindo',
+  title: 'Undian Online',
+  description: 'Undian Online',
 }
 
 export default function RootLayout({
