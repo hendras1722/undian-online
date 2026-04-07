@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 
 interface Paper {
+  id: string; // Added stable ID
   name: string;
   x: number;
   y: number;
@@ -10,6 +11,7 @@ interface Paper {
   vx: number;
   vy: number;
   vrot: number;
+  opacity: number; // Added opacity state
 }
 
 interface ConfettiPiece {
@@ -32,7 +34,7 @@ export default function App() {
   const names = React.useRef<string[]>([]);
   const papers = React.useRef<Paper[]>([]);
   const picking = React.useRef<boolean>(false);
-  const pickedIndex = React.useRef<number>(-1);
+  const pickedPaperId = React.useRef<string>('');
   const winCounts = React.useRef<Record<string, number>>({});
 
   const handSvg = React.useRef<SVGSVGElement | null>(null);
@@ -80,18 +82,22 @@ export default function App() {
 
     const existingPapers = papers.current;
 
+    // Use index-based reuse for maximum stability during typing
     papers.current = names.current.map((name, i) => {
-      if (existingPapers[i]) {
-        return { ...existingPapers[i], name };
+      const existing = existingPapers[i];
+      if (existing) {
+        return { ...existing, name };
       }
       return {
+        id: Math.random().toString(36).substring(2, 11),
         name,
         x: rnd(20, 280),
         y: rnd(180, 200),
         rot: rnd(-20, 20),
         vx: 0,
         vy: 0,
-        vrot: 0
+        vrot: 0,
+        opacity: 1
       };
     });
 
@@ -178,8 +184,12 @@ export default function App() {
     for (let w = 0; w < 4; w++) {
       await scatterPapers(true);
     }
+    // Sync state positions before stopping shake to prevent jumping
+    setPapersList([...papers.current]);
     setIsShaking(false);
+    
     await scatterPapers(false);
+    setPapersList([...papers.current]); // Final sync after settling
     await wait(180);
 
     const weights = papers.current.map(p => {
@@ -199,9 +209,8 @@ export default function App() {
       }
     }
 
-    pickedIndex.current = idx;
     const p = papers.current[idx];
-
+    pickedPaperId.current = p.id;
     winCounts.current[p.name] = (winCounts.current[p.name] || 0) + 1;
 
     if (handSvg.current && handPaper.current && handG.current) {
@@ -209,16 +218,21 @@ export default function App() {
       handPaper.current.setAttribute('opacity', '0');
       handG.current.setAttribute('transform', `translate(${p.x}, -100)`);
 
-      await animateHand(p.x, -100, p.x, p.y - 30, 420);
-      await animateHand(p.x, p.y - 30, p.x, p.y + 5, 130);
+      // Target Y is now p.y - 46 to align handPaper (y=46) with p.y
+      const targetY = p.y - 46;
+
+      await animateHand(p.x, -100, p.x, targetY - 40, 420);
+      await animateHand(p.x, targetY - 40, p.x, targetY, 130);
 
       const el = document.getElementById('p' + idx) as HTMLElement | null;
       if (el) el.style.opacity = '0';
+      // Sync opacity in ref too to prevent re-render issues
+      p.opacity = 0;
       handPaper.current.setAttribute('opacity', '1');
 
       await wait(100);
 
-      await animateHand(p.x, p.y + 5, p.x, -160, 520);
+      await animateHand(p.x, targetY, p.x, -160, 520);
 
       handSvg.current.style.display = 'none';
     }
@@ -229,21 +243,28 @@ export default function App() {
   }
 
   function removeWinner() {
-    const idx = names.current.indexOf(winnerName);
-    if (idx > -1) {
-      names.current.splice(idx, 1);
-      // setNamesList([...names.current]);
-      setInputValue(names.current.join('\n'));
-    }
+    // 1. Find the paper index in the current ref by its stable ID
+    const pIdx = papers.current.findIndex(p => p.id === pickedPaperId.current);
+    
+    if (pIdx > -1) {
+      const p = papers.current[pIdx];
+      const nameToRemove = p.name;
+      
+      // 2. Remove from names ref and update textarea
+      const nIdx = names.current.indexOf(nameToRemove);
+      if (nIdx > -1) {
+        names.current.splice(nIdx, 1);
+        setInputValue(names.current.join('\n'));
+      }
+      
+      delete winCounts.current[nameToRemove];
 
-    delete winCounts.current[winnerName];
-
-    if (pickedIndex.current > -1) {
-      papers.current.splice(pickedIndex.current, 1);
+      // 3. Remove the paper itself
+      papers.current.splice(pIdx, 1);
       setPapersList([...papers.current]);
-      pickedIndex.current = -1;
     }
 
+    pickedPaperId.current = '';
     setShowWinner(false);
     if (papers.current.length > 0) {
       setBtnAmbilDisabled(false);
@@ -254,9 +275,15 @@ export default function App() {
     setShowWinner(false);
     setBtnAmbilDisabled(false);
 
-    if (pickedIndex.current > -1) {
-      const el = document.getElementById('p' + pickedIndex.current) as HTMLElement | null;
-      if (el) el.style.opacity = '1';
+    if (pickedPaperId.current) {
+      const pIdx = papers.current.findIndex(p => p.id === pickedPaperId.current);
+      if (pIdx > -1) {
+        const p = papers.current[pIdx];
+        p.opacity = 1;
+        const el = document.getElementById('p' + pIdx) as HTMLElement | null;
+        if (el) el.style.opacity = '1';
+      }
+      pickedPaperId.current = '';
     }
   }
 
@@ -333,14 +360,14 @@ export default function App() {
         <div id="papers">
           {papersList.map((p, i) => (
             <div
-              key={i}
+              key={p.id} // Use stable ID as key
               id={`p${i}`}
               className="absolute w-[40px] h-[30px] bg-[#fef9c3] border border-[#d4c43a] rounded-[3px] origin-center"
               style={{
                 left: `${p.x - 20}px`,
                 top: `${p.y - 15}px`,
                 transform: `rotate(${p.rot}deg)`,
-                opacity: 1
+                opacity: p.opacity // Use state-driven opacity
               }}
             ></div>
           ))}
