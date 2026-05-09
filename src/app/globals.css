@@ -150,3 +150,80 @@ details > summary::-webkit-details-marker {
 details[open] > *:not(summary) {
   animation: details-show 150ms ease-in-out;
 }
+
+/* Premium Lucky Draw Styles */
+.premium-bg {
+  background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background-attachment: fixed;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+@keyframes box-float {
+  0%, 100% { transform: translateY(0) rotateX(5deg); }
+  50% { transform: translateY(-10px) rotateX(2deg); }
+}
+
+.animate-box-float {
+  animation: box-float 4s ease-in-out infinite;
+}
+
+@keyframes paper-shake {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  10% { transform: translate3d(-6px, 2px, 0) rotate(-2deg); }
+  20% { transform: translate3d(6px, -3px, 0) rotate(3deg); }
+  30% { transform: translate3d(-7px, 1px, 0) rotate(-2.5deg); }
+  40% { transform: translate3d(7px, 4px, 0) rotate(3.5deg); }
+  50% { transform: translate3d(-6px, -2px, 0) rotate(-2deg); }
+  60% { transform: translate3d(6px, 1px, 0) rotate(2deg); }
+  70% { transform: translate3d(-7px, 3px, 0) rotate(-3deg); }
+  80% { transform: translate3d(7px, -1px, 0) rotate(3deg); }
+  90% { transform: translate3d(-4px, 2px, 0) rotate(-1deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+.animate-paper-shake {
+  animation: paper-shake 0.18s ease-in-out infinite;
+}
+
+/* Paper Folded Effect & Shadow */
+.paper-visual {
+  background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 50%, #f2f2f2 100%);
+  position: relative;
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease-out, opacity 0.3s;
+}
+
+.paper-visual::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(225deg, transparent 50%, #e5e5e5 50%, #f3f3f3 100%);
+  border-bottom-left-radius: 2px;
+  box-shadow: -1px 1px 2px rgba(0,0,0,0.05);
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+@keyframes winner-reveal {
+  0% { transform: scale(0.5); opacity: 0; filter: blur(10px); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+.animate-winner-reveal {
+  animation: winner-reveal 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
