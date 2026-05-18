@@ -167,8 +167,8 @@ export default function App() {
         if (handsLoaded) resolve()
       }
 
-      scriptHands.onerror = () => reject(new Error('Gagal memuat MediaPipe Hands.'))
-      scriptCamera.onerror = () => reject(new Error('Gagal memuat MediaPipe Camera.'))
+      scriptHands.onerror = () => reject(new Error('Gagal Memuat Kamera Hands.'))
+      scriptCamera.onerror = () => reject(new Error('Gagal Memuat Kamera Camera.'))
 
       document.head.appendChild(scriptHands)
       document.head.appendChild(scriptCamera)
@@ -843,7 +843,7 @@ export default function App() {
               {!isMediaPipeLoaded && !mediaPipeError && (
                 <div className="absolute inset-0 bg-[#050816]/90 backdrop-blur-md flex flex-col items-center justify-center gap-3">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
-                  <span className="text-xs text-white/60 tracking-wider">Memuat MediaPipe...</span>
+                  <span className="text-xs text-white/60 tracking-wider">Memuat Kamera...</span>
                 </div>
               )}
 
