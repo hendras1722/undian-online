@@ -16,6 +16,7 @@ export default function App() {
   const [showWinner, setShowWinner] = useState<boolean>(false)
   const [btnAmbilDisabled, setBtnAmbilDisabled] = useState<boolean>(true)
   const [isShaking, setIsShaking] = useState<boolean>(false)
+  const [isDrawing, setIsDrawing] = useState<boolean>(false)
 
   // MediaPipe state
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false)
@@ -66,6 +67,28 @@ export default function App() {
     names.current = newNames
     setBtnAmbilDisabled(newNames.length === 0)
   }
+
+  // Shuffle names in textarea in real-time when the box is shaking
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    if (isShaking && names.current.length > 1) {
+      intervalId = setInterval(() => {
+        const shuffled = [...names.current]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        names.current = shuffled
+        setInputValue(shuffled.join('\n'))
+      }, 100)
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isShaking])
+
 
   async function animateHand(
     x0: number,
@@ -481,6 +504,7 @@ export default function App() {
     }
 
     picking.current = true
+    setIsDrawing(true)
     setBtnAmbilDisabled(true)
     setShowWinner(false)
 
@@ -555,6 +579,7 @@ export default function App() {
     setWinnerName(winner)
     setShowWinner(true)
     picking.current = false
+    setIsDrawing(false)
 
     // Reset gesture meters
     isBoxReady.current = false
@@ -566,6 +591,7 @@ export default function App() {
     if (picking.current || !names.current.length) return
 
     picking.current = true
+    setIsDrawing(true)
     setBtnAmbilDisabled(true)
     setShowWinner(false)
 
@@ -641,6 +667,7 @@ export default function App() {
     setWinnerName(winner)
     setShowWinner(true)
     picking.current = false
+    setIsDrawing(false)
 
     if (isGestureMode) {
       shakeEnergy.current = 0
@@ -672,25 +699,28 @@ export default function App() {
 
   const confettiColors = ['#ffd700', '#ffffff', '#ff4500', '#1e90ff', '#32cd32', '#ff69b4']
 
-  const confettiPieces: ConfettiPiece[] = Array.from({ length: 80 }).map((_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    animDuration: 3 + Math.random() * 4,
-    animDelay: Math.random() * 2,
-    color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
-  }))
+  const confettiPieces = React.useMemo(() => {
+    if (!showWinner) return []
+    return Array.from({ length: 80 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      animDuration: 3 + Math.random() * 4,
+      animDelay: Math.random() * 2,
+      color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+    }))
+  }, [showWinner])
 
   return (
     <div className="min-h-screen bg-[#050816] text-white flex flex-col items-center justify-center overflow-hidden relative px-4">
       <style>{`
         @keyframes confetti-fall {
           0% {
-            transform: translateY(-10vh) rotate(0deg);
+            transform: translateY(-10vh) rotate(0deg) translateZ(0);
             opacity: 1;
           }
 
           100% {
-            transform: translateY(110vh) rotate(720deg);
+            transform: translateY(110vh) rotate(720deg) translateZ(0);
             opacity: 0;
           }
         }
@@ -753,6 +783,7 @@ export default function App() {
         <textarea
           value={inputValue}
           onChange={handleTextareaChange}
+          disabled={isDrawing || showWinner}
           placeholder="Masukkan nama satu per baris"
           className="
     w-full
@@ -764,6 +795,7 @@ export default function App() {
     text-sm
     leading-7
     placeholder:text-white/30
+    disabled:opacity-50
   "
         />
 
@@ -998,7 +1030,7 @@ export default function App() {
       </div>
 
       <div className="relative mt-8 md:mt-32 scale-[0.72] md:scale-100">
-        <div className={`relative w-[400px] h-[280px] ${isShaking ? 'animate-paper-shake' : 'animate-box-float'}`}>
+        <div className={`relative w-[400px] h-[280px] ${(isShaking && !showWinner) ? 'animate-paper-shake' : 'animate-box-float'}`}>
 
           <div className="absolute inset-0 bg-[#09132c] rounded-b-[40px]" />
 
@@ -1098,7 +1130,7 @@ export default function App() {
 
             <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30">
               <div className="text-2xl font-black tracking-[0.3em]">
-                MYSTERY BOX
+                KOTAK UNDIAN
               </div>
             </div>
           </div>
@@ -1119,7 +1151,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
 
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ transform: 'translateZ(0)' }}>
             {confettiPieces.map(c => (
               <div
                 key={c.id}
@@ -1131,6 +1163,8 @@ export default function App() {
                   backgroundColor: c.color,
                   animation: `confetti-fall ${c.animDuration}s linear ${c.animDelay}s infinite`,
                   borderRadius: '2px',
+                  willChange: 'transform',
+                  transform: 'translateZ(0)',
                 }}
               />
             ))}
